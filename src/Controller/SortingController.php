@@ -70,7 +70,7 @@ class SortingController
 		$this->entityManager = $entityManager;
 		$this->eventDispatcher = $eventDispatcher;
 		$this->router = $router;
-		$this->flashBag = $requestStack->getSession();
+		$this->flashBag = $requestStack->getSession()->getFlashbag();
 		$this->translator = $translator;
 	}
 
@@ -111,8 +111,9 @@ class SortingController
 		$i = 0;
 		$taxon = null;
 
-		if ($request->request->get('id') !== null) {
-			foreach ($request->request->get('id') as $id) {
+		$ids = $request->request->all('id');
+		if (!empty($ids)) {
+			foreach ($ids as $id) {
 				$productTaxon = $this->productTaxonRepository->find($id);
 				assert($productTaxon instanceof ProductTaxonInterface);
 				$productTaxon->setPosition($i);
@@ -135,7 +136,7 @@ class SortingController
 
 			// Eg. for update product position in elasticsearch
 			$event = new GenericEvent($taxon);
-			$this->eventDispatcher->dispatch('mango-sylius-sorting-products-after-persist', $event);
+			$this->eventDispatcher->dispatch($event, 'mango-sylius-sorting-products-after-persist');
 		} else {
 			$message = $this->translator->trans('mango-sylius.ui.sortingPlugin.noProductMessage');
 			$this->flashBag->add('error', $message);
